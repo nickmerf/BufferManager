@@ -1,4 +1,5 @@
 /**
+ * Nick Merfeld nmerfeld
  * @author See Contributors.txt for code contributors and overview of BadgerDB.
  *
  * @section LICENSE
