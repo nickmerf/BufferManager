@@ -1,4 +1,5 @@
 /**
+ * Nick Merfeld nmerfeld
  * @mainpage BadgerDB Documentation
  *
  * @section toc_sec Table of contents
