@@ -1,3 +1,7 @@
+/*
+ * Nick Merfeld nmerfeld
+ * Uilliam Lawless ulawless
+ */
 #include <iostream>
 #include <stdlib.h>
 //#include <stdio.h>
