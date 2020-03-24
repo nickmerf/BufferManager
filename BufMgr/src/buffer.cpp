@@ -19,10 +19,11 @@
 namespace badgerdb { 
 
 BufMgr::BufMgr(std::uint32_t bufs)
-	: numBufs(bufs) {
+	: numBufs(bufs) { // numBufs = bufs
+
 	bufDescTable = new BufDesc[bufs];
 
-  for (FrameId i = 0; i < bufs; i++) 
+  for (FrameId i = 0; i < bufs; i++)
   {
   	bufDescTable[i].frameNo = i;
   	bufDescTable[i].valid = false;
@@ -43,6 +44,8 @@ BufMgr::~BufMgr() {
 
 void BufMgr::advanceClock()
 {
+	clockHand++;
+	clockHand = clockHand % (this->numBufs);
 
 }
 
