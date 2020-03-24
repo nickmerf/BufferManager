@@ -1,6 +1,7 @@
 /*
  * Nick Merfeld nmerfeld
  * Uilliam Lawless ulawless
+ * Rehan Madhugiri rehan
  */
 #include <iostream>
 #include <stdlib.h>
@@ -232,15 +233,6 @@ void test2()
 		sprintf((char*)tmpbuf, "test.2 Page %d %7.1f", pageno2, (float)pageno2);
 		rid2 = page2->insertRecord(tmpbuf);
 
-		int index = random() % num;
-    pageno1 = pid[index];
-		bufMgr->readPage(file1ptr, pageno1, page);
-		sprintf((char*)tmpbuf, "test.1 Page %d %7.1f", pageno1, (float)pageno1);
-		if(strncmp(page->getRecord(rid[index]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
-		{
-			PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
-		}
-
 		bufMgr->allocPage(file3ptr, pageno3, page3);
 		sprintf((char*)tmpbuf, "test.3 Page %d %7.1f", pageno3, (float)pageno3);
 		rid3 = page3->insertRecord(tmpbuf);
@@ -349,3 +341,4 @@ void test6()
 
 	bufMgr->flushFile(file1ptr);
 }
+
