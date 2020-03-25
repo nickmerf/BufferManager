@@ -42,6 +42,7 @@ BufMgr::~BufMgr() {
 	delete [] bufPool;
 }
 
+// Advance clock to next frame in buffer pool 
 void BufMgr::advanceClock()
 {
 	clockHand++;
