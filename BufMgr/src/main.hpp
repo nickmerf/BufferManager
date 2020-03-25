@@ -1,6 +1,7 @@
 /**
  * Nick Merfeld nmerfeld
  * Uilliam Lawless ulawless
+ * Rehan Madhugiri rehan
  * @mainpage BadgerDB Documentation
  *
  * @section toc_sec Table of contents
