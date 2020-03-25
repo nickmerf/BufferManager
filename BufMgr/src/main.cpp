@@ -1,8 +1,8 @@
-/*
- * Nick Merfeld nmerfeld
- * Uilliam Lawless ulawless
- * Rehan Madhugiri rehan
- */
+/* 
+* Nick Merfeld nmerfeld 
+* Uilliam Lawless ulawless 
+* Rehan Madhugiri rehan 
+*/
 #include <iostream>
 #include <stdlib.h>
 //#include <stdio.h>
@@ -341,4 +341,3 @@ void test6()
 
 	bufMgr->flushFile(file1ptr);
 }
-
