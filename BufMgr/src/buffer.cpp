@@ -171,14 +171,32 @@ void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 	bufPool[newFrame] = newPage; // new frame
 }
 
-/*
-  This method deletes a particular page from ﬁle. Before deleting the page from ﬁle, it makes sure that if the page to 
-  be deleted is allocated a frame in the buffer pool,that frame is freed and correspondingly entry from hash table 
-  is also removed.
+/**
+  * Delete page from file and also from buffer pool if present.
+  * Since the page is entirely deleted from file, its unnecessary to see if the page is dirty.
+  *
+  * @param file   	File object
+  * @param PageNo  Page number
 */
 void BufMgr::disposePage(File* file, const PageId PageNo)
-{
-    
+{  
+  FrameId frame;     
+  try{ 
+    hashTable->lookup(file, PageNo, frame);
+  }
+  // Page is not in the buffer pool
+  catch(HashNotFoundException & e){
+    // deletes a particular page from file
+    file->deletePage(PageNo);
+    return;
+  } 
+  // if the page to be deleted is allocated a frame in the buffer pool
+  // frame is freed  
+  // and correspondingly entry from hash table is also removed.
+  hashTable->remove(file,PageNo);
+  bufDescTable[frame].Clear();  
+  // deletes a particular page from file
+  file->deletePage(PageNo); 
 }
 
 void BufMgr::printSelf(void) 
