@@ -108,14 +108,34 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
   page =&p;
 }
 
-/*
-  Decrements the pinCnt of the frame containing (ﬁle, PageNo) and, if dirty == true, sets the dirty bit. 
-  Throws PAGENOTPINNED if the pin count is already 0. Does nothing if
-  page is not found in the hash table lookup.
-*/
+/**
+* Unpin a page from memory since it is no longer required for it to remain in memory.
+*
+* @param file   File object
+* @param PageNo  Page number
+* @param dirty	True if the page to be unpinned needs to be marked dirty	
+   * @throws  PageNotPinnedException If the page is not already pinned
+	 */
 void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty) 
 {
-  
+  FrameId frame;
+  try{
+    hashTable->lookup(file, pageNo, frame);
+  }
+  // Page is not in the buffer pool
+  catch(HashNotFoundException & e){
+    return;
+  }
+  if(bufDescTable[frame].pinCnt == 0){
+    throw PageNotPinnedException(file->filename(), pageNo, frame);
+  }
+  else{
+    bufDescTable[frame].pinCnt--;
+  }
+  // Not sure if this should be inside the else (if the pin count is already 0 should the dirt bit still be affected?)
+  if(dirty == true){
+    bufDescTable[frame].dirty = true;
+  }
 }
 
 /*
