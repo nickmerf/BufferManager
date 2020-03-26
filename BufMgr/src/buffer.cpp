@@ -131,16 +131,24 @@ void BufMgr::flushFile(const File* file)
   
 }
 
-/*
-  The ﬁrst step in this method is to to allocate an empty page in the speciﬁed ﬁle by invoking the ﬁle->allocatePage()
-  method. This method will return a newly allocated page. Then allocBuf() is called to obtain a buffer pool frame.   
-  Next, an entry is inserted into the hash table and Set() is invoked on the frame to set it up properly. The method 
-  returns boththepagenumberofthenewlyallocatedpagetothecallerviathepageNoparameter and a pointer to the buffer frame   
-  allocated for the page via the page parameter.
-*/
-void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page) 
+/**
+ * allocates a new page for a file and adds it to the buffer
+ * returns the page number of the newly allocated page
+ * @param file   pointer to file to allocate a new page for
+ * @param pageNo page number of newly allocated page
+ * @param page   allocated page
+ */
+void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 {
-  
+	FrameId newFrame;
+	Page newPage = file->allocatePage();
+	page = &newPage;
+	allocBuf(newFrame);
+	hashTable->insert(file, pageNo, newFrame);
+	bufDescTable->Set(file, pageNo);
+
+	pageNo = page->page_number(); // new page number
+	bufPool[newFrame] = newPage; // new frame
 }
 
 /*
