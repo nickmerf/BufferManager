@@ -88,7 +88,7 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
     catch(BufferExceededException & e){
         return;
     }
-    // Call the method ﬁle->readPage() to read the page from disk into the buffer pool frame
+    // Call the method ?le->readPage() to read the page from disk into the buffer pool frame
     Page p = file->readPage(pageNo);
     // If page is valid insert it into the hashtable
     hashTable->insert(file, pageNo, frame);
@@ -96,14 +96,16 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
     bufDescTable->Set(file, pageNo);
     // Return a pointer to the frame containing the page via the page parameter.
     page = &p;
+    return;
   }
   // Page is in the buffer pool
   // set the appropriate refbit
-  
+  bufDescTable[frame].refbit = true;
   // increment the pinCnt for the page
-  
+  bufDescTable[frame].pinCnt++;
   // return a pointer to the frame containing the page
-  
+  Page p = file->readPage(pageNo);
+  page =&p;
 }
 
 /*
