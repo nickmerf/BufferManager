@@ -57,7 +57,31 @@ void BufMgr::advanceClock()
 */
 void BufMgr::allocBuf(FrameId & frame) 
 {
-  
+	FrameId intial = clockHand;
+	advanceClock();
+	while(intial != clockHand) {
+		if(!bufDescTable[clockHand].valid) {
+			frame = bufDescTable[clockHand].frameNo;
+                        break;
+                }
+                if(bufDescTable[clockHand].refbit) {
+                        bufDescTable[clockHand].refbit = false;
+                        advanceClock();
+                        continue;
+                }
+                if(bufDescTable[clockHand].pinCnt > 0) {
+                        advanceClock();
+                        continue;
+                }
+                if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
+                        frame = bufDescTable[clockHand].frameNo;
+                        break;
+                }
+        }
+
+        if(initial == clockHand) {
+                throw BufferExceededException;
+        }
 }
 
 /*
