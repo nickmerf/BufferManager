@@ -97,29 +97,30 @@ void BufMgr::allocBuf(FrameId & frame)
 */
 void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 {
-  // Desired frame number
-  FrameId fid;
-  FrameId & frame = fid;
+  // Desired frame number  
+  FrameId frame;
   try{
     hashTable->lookup(file, pageNo, frame);
   }
   // Page is not in the buffer pool
   catch(HashNotFoundException & e){
+    std:: cout << "Not Found" << "\n";
     // Call allocBuf() to allocate a buffer frame
     try{
       allocBuf(frame);
     }
     catch(BufferExceededException & e){
         return;
-    }
-    // Call the method ?le->readPage() to read the page from disk into the buffer pool frame
+    }   
+    // Call the method file->readPage() to read the page from disk into the buffer pool frame
     Page p = file->readPage(pageNo);
     // If page is valid insert it into the hashtable
+    bufPool[frame] = p;     
     hashTable->insert(file, pageNo, frame);
     // invoke Set() on the frame to set it up properly
-    bufDescTable->Set(file, pageNo);
+    bufDescTable[frame].Set(file, pageNo);
     // Return a pointer to the frame containing the page via the page parameter.
-    page = &p;
+    page = &bufPool[frame];
     return;
   }
   // Page is in the buffer pool
@@ -128,8 +129,7 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
   // increment the pinCnt for the page
   bufDescTable[frame].pinCnt++;
   // return a pointer to the frame containing the page
-  Page p = file->readPage(pageNo);
-  page =&p;
+  page = &bufPool[frame];
 }
 
 /**
