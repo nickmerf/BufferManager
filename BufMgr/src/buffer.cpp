@@ -184,15 +184,22 @@ void BufMgr::flushFile(const File* file)
  */
 void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 {
-	FrameId newFrame;
-	Page newPage = file->allocatePage();
-	page = &newPage;
-	allocBuf(newFrame);
+  // the frame the Page will be allocated in
+  FrameId newFrame;
+  // the new Page to be added to the buffer
+  Page newPage = file->allocatePage();
+  // find a free frame for the page
+  allocBuf(newFrame);
+  // insert the page into the frame
+  bufPool[newFrame] = newPage; 
+  // return the new page
+  page = &bufPool[newFrame];
+  // return the new page number
+  pageNo = page->page_number(); 
+  // insert the Page into the hash table
 	hashTable->insert(file, pageNo, newFrame);
-	bufDescTable->Set(file, pageNo);
-
-	pageNo = page->page_number(); // new page number
-	bufPool[newFrame] = newPage; // new frame
+  // initiate the frame
+  bufDescTable[newFrame].Set(file, pageNo);
 }
 
 /**
