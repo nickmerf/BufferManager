@@ -57,11 +57,15 @@ void BufMgr::advanceClock()
   */
 void BufMgr::allocBuf(FrameId & frame) 
 {
+  // Check the first frame
 	FrameId initial = clockHand;
+  // If the frame is not valid, it is free
   if(!bufDescTable[clockHand].valid) {
+      // return the frame's ID
 			frame = bufDescTable[clockHand].frameNo;
       return;
   }
+  // If the frame is valid but is not being used and was not recently referenced
   else if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
     // if frame dirty write back to disk
     if(bufDescTable[clockHand].dirty){
@@ -74,24 +78,33 @@ void BufMgr::allocBuf(FrameId & frame)
       // invoke the Clear() method of BufDesc for the page frame
       bufDescTable[clockHand].Clear();
     }
+    // the frame has been chosen to be replaced, return it's ID
     frame = bufDescTable[clockHand].frameNo;
     return;
   }
 	advanceClock();
+ // If the first frame is not free, check the rest of the buffer pool
 	while(initial != clockHand) {
+    // If the frame is not valid, it is free
 	  if(!bufDescTable[clockHand].valid) {
+      // return the frame's ID
 			frame = bufDescTable[clockHand].frameNo;
       break;
     }
+    // If the frame is valid, it could still be chosen to be replaced
+    // If it has has been referenced recently, it should not be replaced
     if(bufDescTable[clockHand].refbit) {
+      // Clear its referenced bit and move on
       bufDescTable[clockHand].refbit = false;
       advanceClock();
       continue;
     }
+    // Otherwise if it is being used it cannot be replaced
     if(bufDescTable[clockHand].pinCnt > 0) {
       advanceClock();
       continue;
     }
+    // Otherwise it can be replaced
     if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
       // if frame dirty write back to disk
       if(bufDescTable[clockHand].dirty){
@@ -104,10 +117,12 @@ void BufMgr::allocBuf(FrameId & frame)
         // invoke the Clear() method of BufDesc for the page frame
         bufDescTable[clockHand].Clear();
       }
+      // the frame has been chosen to be replaced, return it's ID
       frame = bufDescTable[clockHand].frameNo;
       break;
     }
   }
+  // If the clock has done a full rotation the buffer is full
   if(initial == clockHand) {
     throw BufferExceededException();
   }
