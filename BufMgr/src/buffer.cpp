@@ -58,6 +58,25 @@ void BufMgr::advanceClock()
 void BufMgr::allocBuf(FrameId & frame) 
 {
 	FrameId initial = clockHand;
+  if(!bufDescTable[clockHand].valid) {
+			frame = bufDescTable[clockHand].frameNo;
+      return;
+  }
+  else if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
+    // if frame dirty write back to disk
+    if(bufDescTable[clockHand].dirty){
+      // get the dirty frame's page
+      Page & newPage = bufPool[clockHand];
+      // write the page to the appropriate page on disk
+      bufDescTable[clockHand].file->writePage(newPage);
+      // remove entry from the hashtable
+      hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+      // invoke the Clear() method of BufDesc for the page frame
+      bufDescTable[clockHand].Clear();
+    }
+    frame = bufDescTable[clockHand].frameNo;
+    return;
+  }
 	advanceClock();
 	while(initial != clockHand) {
 	  if(!bufDescTable[clockHand].valid) {
@@ -80,6 +99,10 @@ void BufMgr::allocBuf(FrameId & frame)
         Page & newPage = bufPool[clockHand];
         // write the page to the appropriate page on disk
         bufDescTable[clockHand].file->writePage(newPage);
+        // remove entry from the hashtable
+        hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+        // invoke the Clear() method of BufDesc for the page frame
+        bufDescTable[clockHand].Clear();
       }
       frame = bufDescTable[clockHand].frameNo;
       break;
