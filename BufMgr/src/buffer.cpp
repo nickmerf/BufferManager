@@ -164,17 +164,43 @@ void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty)
   }
 }
 
-/*
-  Should scan bufTable for pages belonging to the ﬁle. For each page encountered it should: 
-  (a)if the page is dirty,call ﬁle->writePage()to ﬂush the page to disk and then set the dirty bit for the page 
-      tofalse
-  (b)remove the page from the hashtable(whether the page is clean or dirty) and 
-  (c)invoke the Clear() method of BufDesc for the page frame. Throws PagePinnedException if some page of the ﬁle is pinned. 
-      Throws BadBufferException if an invalid page belonging to the ﬁle is encountered. 
-*/
+/**
+  * Writes out all dirty pages of the file to disk.
+  * All the frames assigned to the file need to be unpinned from buffer pool before this function can be successfully called.
+  * Otherwise Error returned.
+  *
+  * @param file   	File object
+  * @throws  PagePinnedException If any page of the file is pinned in the buffer pool 
+  * @throws BadBufferException If any frame allocated to the file is found to be invalid
+  */
 void BufMgr::flushFile(const File* file) 
 {
-  
+  // scan bufTable for pages belonging to the ﬁle
+  for(unsigned int i = 0; i < numBufs; i++){
+    BufDesc & frame= bufDescTable[i];
+    // If the page belongs to the file
+    if(frame.file == file){
+      // if an invalid page belonging to the ﬁle is encountered throw the exception
+      if(frame.pageNo == 0){
+        throw BadBufferException(i, frame.dirty, frame.valid, frame.refbit);
+      }
+      PageId pageNo = frame.pageNo;
+      if(frame.pinCnt > 0){
+        throw PagePinnedException(file->filename(), pageNo, i);
+      }
+      // if the page is dirty
+      if(frame.dirty == true){
+        // get the frame's page
+        Page & newPage = bufPool[i];
+        // write the page to the appropriate page on disk
+        bufDescTable[i].file->writePage(newPage);
+      }
+      // remove the page from the hashtable
+      hashTable->remove(file, pageNo);
+      // invoke the Clear() method of BufDesc for the page frame
+      bufDescTable[i].Clear();
+    }
+  }
 }
 
 /**
