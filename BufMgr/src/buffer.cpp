@@ -49,41 +49,46 @@ void BufMgr::advanceClock()
 	clockHand = clockHand % (this->numBufs);
 }
 
-/*
-  Allocates a free frame using the clock algorithm; if necessary, writing a dirty page back to disk. 
-  Throws BufferExceededException if all buffer frames are pinned. This private method will get called 
-  by the readPage() and allocPage() methods described below. Make sure that if the buffer frame allocated 
-  has a valid page in it, you remove the appropriate entry from the hash table.
-*/
+/**
+  * Allocate a free frame.  
+  *
+  * @param frame   	Frame reference, frame ID of allocated frame returned via this variable
+  * @throws BufferExceededException If no such buffer is found which can be allocated
+  */
 void BufMgr::allocBuf(FrameId & frame) 
 {
-	FrameId intial = clockHand;
+	FrameId initial = clockHand;
 	advanceClock();
-	while(intial != clockHand) {
-		if(!bufDescTable[clockHand].valid) {
+	while(initial != clockHand) {
+	  if(!bufDescTable[clockHand].valid) {
 			frame = bufDescTable[clockHand].frameNo;
-                        break;
-                }
-                if(bufDescTable[clockHand].refbit) {
-                        bufDescTable[clockHand].refbit = false;
-                        advanceClock();
-                        continue;
-                }
-                if(bufDescTable[clockHand].pinCnt > 0) {
-                        advanceClock();
-                        continue;
-                }
-                if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
-                        frame = bufDescTable[clockHand].frameNo;
-                        break;
-                }
-        }
-
-        if(initial == clockHand) {
-                throw BufferExceededException;
-        }
+      break;
+    }
+    if(bufDescTable[clockHand].refbit) {
+      bufDescTable[clockHand].refbit = false;
+      advanceClock();
+      continue;
+    }
+    if(bufDescTable[clockHand].pinCnt > 0) {
+      advanceClock();
+      continue;
+    }
+    if(bufDescTable[clockHand].pinCnt ==0 && !bufDescTable[clockHand].refbit) {
+      // if frame dirty write back to disk
+      if(bufDescTable[clockHand].dirty){
+        // get the dirty frame's page
+        Page & newPage = bufPool[clockHand];
+        // write the page to the appropriate page on disk
+        bufDescTable[clockHand].file->writePage(newPage);
+      }
+      frame = bufDescTable[clockHand].frameNo;
+      break;
+    }
+  }
+  if(initial == clockHand) {
+    throw BufferExceededException();
+  }
 }
-
 /*
   First check whether the page is already in the buffer pool by invoking the lookup() method, which may throw 
   HashNotFoundException when page is not in the buffer pool, on the hashtable to get a frame number. There are 
