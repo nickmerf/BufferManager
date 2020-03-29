@@ -207,7 +207,7 @@ void BufMgr::flushFile(const File* file)
   for(unsigned int frameNo = 0; frameNo < numBufs; frameNo++){
     BufDesc & frame= bufDescTable[frameNo];
     // If the page belongs to the file
-    if(frame.file == file){
+    if(frame.file->filename() == file->filename()){
       // if an invalid page belonging to the ﬁle is encountered throw the exception
       if(frame.pageNo == 0){
         throw BadBufferException(frameNo, frame.dirty, frame.valid, frame.refbit);
