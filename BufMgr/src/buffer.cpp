@@ -176,29 +176,29 @@ void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty)
 void BufMgr::flushFile(const File* file) 
 {
   // scan bufTable for pages belonging to the ﬁle
-  for(unsigned int i = 0; i < numBufs; i++){
-    BufDesc & frame= bufDescTable[i];
+  for(unsigned int frameNo = 0; frameNo < numBufs; frameNo++){
+    BufDesc & frame= bufDescTable[frameNo];
     // If the page belongs to the file
     if(frame.file == file){
       // if an invalid page belonging to the ﬁle is encountered throw the exception
       if(frame.pageNo == 0){
-        throw BadBufferException(i, frame.dirty, frame.valid, frame.refbit);
+        throw BadBufferException(frameNo, frame.dirty, frame.valid, frame.refbit);
       }
       PageId pageNo = frame.pageNo;
       if(frame.pinCnt > 0){
-        throw PagePinnedException(file->filename(), pageNo, i);
+        throw PagePinnedException(file->filename(), pageNo, frameNo);
       }
       // if the page is dirty
       if(frame.dirty == true){
         // get the frame's page
-        Page & newPage = bufPool[i];
+        Page & newPage = bufPool[frameNo];
         // write the page to the appropriate page on disk
-        bufDescTable[i].file->writePage(newPage);
+        bufDescTable[frameNo].file->writePage(newPage);
       }
       // remove the page from the hashtable
       hashTable->remove(file, pageNo);
       // invoke the Clear() method of BufDesc for the page frame
-      bufDescTable[i].Clear();
+      bufDescTable[frameNo].Clear();
     }
   }
 }
