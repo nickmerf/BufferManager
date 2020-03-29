@@ -81,6 +81,7 @@ void BufMgr::allocBuf(FrameId & frame)
       Page & newPage = bufPool[clockHand];
       // write the page to the appropriate page on disk
       bufDescTable[clockHand].file->writePage(newPage);
+      bufStats.diskwrites++;
       // remove entry from the hashtable
       hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
       // invoke the Clear() method of BufDesc for the page frame
@@ -120,6 +121,7 @@ void BufMgr::allocBuf(FrameId & frame)
         Page & newPage = bufPool[clockHand];
         // write the page to the appropriate page on disk
         bufDescTable[clockHand].file->writePage(newPage);
+        bufStats.diskwrites++;
         // remove entry from the hashtable
         hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
         // invoke the Clear() method of BufDesc for the page frame
@@ -163,6 +165,7 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
     }   
     // Call the method file->readPage() to read the page from disk into the buffer pool frame
     Page p = file->readPage(pageNo);
+    bufStats.diskreads++;
     // If page is valid insert it into the hashtable
     bufPool[frame] = p;     
     hashTable->insert(file, pageNo, frame);
@@ -179,6 +182,7 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
   bufDescTable[frame].pinCnt++;
   // return a pointer to the frame containing the page
   page = &bufPool[frame];
+  bufStats.accesses++;
 }
 
 /**
@@ -243,6 +247,7 @@ void BufMgr::flushFile(const File* file)
         Page & newPage = bufPool[frameNo];
         // write the page to the appropriate page on disk
         bufDescTable[frameNo].file->writePage(newPage);
+        bufStats.diskwrites++;
       }
       // remove the page from the hashtable
       hashTable->remove(file, pageNo);
@@ -250,6 +255,7 @@ void BufMgr::flushFile(const File* file)
       bufDescTable[frameNo].Clear();
     }
   }
+  bufStats.accesses++;
 }
 
 /**
@@ -277,6 +283,7 @@ void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 	hashTable->insert(file, pageNo, newFrame);
   // initiate the frame
   bufDescTable[newFrame].Set(file, pageNo);
+  bufStats.accesses++;
 }
 
 /**
