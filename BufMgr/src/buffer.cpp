@@ -157,12 +157,7 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
   // Page is not in the buffer pool
   catch(HashNotFoundException & e){
     // Call allocBuf() to allocate a buffer frame
-    try{
-      allocBuf(frame);
-    }
-    catch(BufferExceededException & e){
-        return;
-    }   
+    allocBuf(frame); 
     // Call the method file->readPage() to read the page from disk into the buffer pool frame
     Page p = file->readPage(pageNo);
     bufStats.diskreads++;
@@ -272,7 +267,7 @@ void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
   // the new Page to be added to the buffer
 	Page newPage = file->allocatePage();
   // find a free frame for the page
-	allocBuf(newFrame);
+  allocBuf(newFrame);  
   // insert the page into the frame
   bufPool[newFrame] = newPage; 
   // return the new page
