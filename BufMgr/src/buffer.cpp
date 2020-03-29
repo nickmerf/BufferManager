@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <iostream>
+#include <stdlib.h>
 #include "buffer.h"
 #include "exceptions/buffer_exceeded_exception.h"
 #include "exceptions/page_not_pinned_exception.h"
@@ -18,6 +19,9 @@
 
 namespace badgerdb { 
 
+/**
+  * Constructor of BufMgr class
+  */
 BufMgr::BufMgr(std::uint32_t bufs)
 	: numBufs(bufs) { // numBufs = bufs
 
@@ -37,12 +41,16 @@ BufMgr::BufMgr(std::uint32_t bufs)
   clockHand = bufs - 1;
 }
 
-
+/**
+  * Destructor of BufMgr class
+  */
 BufMgr::~BufMgr() {
 	delete [] bufPool;
 }
 
-// Advance clock to next frame in buffer pool 
+/**
+  * Advance clock to next frame in the buffer pool
+  */
 void BufMgr::advanceClock()
 {
 	clockHand++;
@@ -127,17 +135,16 @@ void BufMgr::allocBuf(FrameId & frame)
     throw BufferExceededException();
   }
 }
-/*
-  First check whether the page is already in the buffer pool by invoking the lookup() method, which may throw 
-  HashNotFoundException when page is not in the buffer pool, on the hashtable to get a frame number. There are 
-  two cases to be handled depending on the outcome of the lookup() call: 
-  1: Page is not in the buffer pool. Call allocBuf() to allocate a buffer frame and then call the method
-      ﬁle->readPage() to read the page from disk into the buffer pool frame. Next, insert the page into the 
-      hashtable. Finally, invoke Set() on the frame to set it up properly. Set() will leave the pinCnt for the 
-      page set to 1. Return a pointer to the frame containing the page via the page parameter. 
-  2: Page is in the buffer pool. In this case set the appropriate refbit, increment the pinCnt for the page, 
-      and then return a pointer to the frame containing the page via the page parameter.
-*/
+
+/**
+  * Reads the given page from the file into a frame and returns the pointer to page.
+  * If the requested page is already present in the buffer pool pointer to that frame is returned
+  * otherwise a new frame is allocated from the buffer pool for reading the page.
+  *
+  * @param file   	File object
+  * @param PageNo  Page number in the file to be read
+  * @param page  	Reference to page pointer. Used to fetch the Page object in which requested page from file is read in.
+  */
 void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 {
   // Desired frame number  
@@ -147,7 +154,6 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
   }
   // Page is not in the buffer pool
   catch(HashNotFoundException & e){
-    std:: cout << "Not Found" << "\n";
     // Call allocBuf() to allocate a buffer frame
     try{
       allocBuf(frame);
@@ -176,13 +182,13 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 }
 
 /**
-* Unpin a page from memory since it is no longer required for it to remain in memory.
-*
-* @param file   File object
-* @param PageNo  Page number
-* @param dirty	True if the page to be unpinned needs to be marked dirty	
-   * @throws  PageNotPinnedException If the page is not already pinned
-	 */
+  * Unpin a page from memory since it is no longer required for it to remain in memory.
+  *
+  * @param file   File object
+  * @param PageNo  Page number
+  * @param dirty	True if the page to be unpinned needs to be marked dirty	
+  * @throws  PageNotPinnedException If the page is not already pinned
+  */
 void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty) 
 {
   FrameId frame;
@@ -256,11 +262,11 @@ void BufMgr::flushFile(const File* file)
 void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 {
   // the frame the Page will be allocated in
-  FrameId newFrame;
+	FrameId newFrame;
   // the new Page to be added to the buffer
-  Page newPage = file->allocatePage();
+	Page newPage = file->allocatePage();
   // find a free frame for the page
-  allocBuf(newFrame);
+	allocBuf(newFrame);
   // insert the page into the frame
   bufPool[newFrame] = newPage; 
   // return the new page
@@ -301,6 +307,9 @@ void BufMgr::disposePage(File* file, const PageId PageNo)
   file->deletePage(PageNo); 
 }
 
+/**
+  * Print member variable values. 
+  */
 void BufMgr::printSelf(void) 
 {
   BufDesc* tmpbuf;
