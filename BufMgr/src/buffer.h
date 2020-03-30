@@ -1,7 +1,4 @@
 /**
- * Nick Merfeld nmerfeld
- * Uilliam Lawless ulawless
- * Rehan Madhugiri rehan
  * @author See Contributors.txt for code contributors and overview of BadgerDB.
  *
  * @section LICENSE
@@ -280,7 +277,48 @@ class BufMgr
   {
 		return bufStats;
   }
-
+  
+  /**
+   * Get valid bit of the frame
+	 */
+  bool getFrameValid(int frame){
+    return bufDescTable[frame].valid;
+  }
+  
+  /**
+   * Get filename of the page in the frame
+	 */
+  const std::string& getFileName(int frame){
+    return bufDescTable[frame].file->filename();
+  }
+  
+  /**
+   * Get pagenumber of the frame
+	 */
+  PageId getPage(int frame){
+    return bufDescTable[frame].pageNo;
+  }
+  
+  /**
+   * Get pincount of the frame
+	 */
+  int getPinCnt(int frame){
+    return bufDescTable[frame].pinCnt;
+  }
+  
+  /**
+   * Get referenced bit of the frame
+	 */
+  bool getRefBit(int frame){
+    return bufDescTable[frame].refbit;
+  }
+  
+  /**
+   * Get dirty bit of the frame
+	 */
+  bool getDirtyBit(int frame){
+    return bufDescTable[frame].dirty;
+  }
 	/**
    * Clear buffer pool usage statistics
 	 */
@@ -288,6 +326,7 @@ class BufMgr
   {
 		bufStats.clear();
   }
+  
 };
 
 }
