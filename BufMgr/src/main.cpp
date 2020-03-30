@@ -63,12 +63,13 @@ void test3();
 void test4();
 void test5();
 void test6();
+void newTest();
 void testBufMgr();
 
 int main() 
 {
 	//Following code shows how to you File and Page classes
-
+  /*
   const std::string& filename = "test.db";
   // Clean up from any previous runs that crashed.
   try
@@ -126,7 +127,7 @@ int main()
 
   // Delete the file since we're done with it.
   File::remove(filename);
-
+  */
 	//This function tests buffer manager, comment this line if you don't wish to test buffer manager
 	testBufMgr();
 }
@@ -171,12 +172,13 @@ void testBufMgr()
 	//Comment tests which you do not wish to run now. Tests are dependent on their preceding tests. So, they have to be run in the following order. 
 	//Commenting  a particular test requires commenting all tests that follow it else those tests would fail.
 	
-	fork_test(test1);
+	/*fork_test(test1);
 	fork_test(test2);
 	fork_test(test3);
 	fork_test(test4);
 	fork_test(test5);
-	fork_test(test6);
+	fork_test(test6);*/
+  newTest();
 
 	//Close files before deleting them
 	file1.close();
@@ -201,13 +203,12 @@ void test1()
 {
 	//Allocating pages in a file...
 	for (i = 0; i < num; i++)
-	{
+	{   
 		bufMgr->allocPage(file1ptr, pid[i], page);
-		sprintf((char*)tmpbuf, "test.1 Page %d %7.1f", pid[i], (float)pid[i]);
+		sprintf((char*)tmpbuf, "test.1 Page %d %7.1f", pid[i], (float)pid[i]);   
 		rid[i] = page->insertRecord(tmpbuf);
 		bufMgr->unPinPage(file1ptr, pid[i], true);
 	}
-
 	//Reading pages back...
 	for (i = 0; i < num; i++)
 	{
@@ -340,4 +341,89 @@ void test6()
 		bufMgr->unPinPage(file1ptr, i, true);
 
 	bufMgr->flushFile(file1ptr);
+}
+
+void newTest(){
+//TEST for allocPage and disposePage
+  bool passed = true;
+  // Check that allocPage allocates the page into the first slot with correct values
+  bufMgr->allocPage(file1ptr,i,page);
+  // Frame desc values
+  bool valid = bufMgr->getFrameValid(0);
+  const std::string& fname = bufMgr-> getFileName(0);
+  int pincount = bufMgr->getPinCnt(0);
+  bool ref = bufMgr->getRefBit(0);
+  // Checks that the correct frame is allocated with the correct description values
+    // As well as the correct page number and Page are returned from allocPage 
+  if(valid != 1 || fname!="test.1" || i != 1 || pincount != 1 || ref != 1 ||page->page_number()!=1){
+    std::cout << "ERROR Frame not allocated correctly in allocPage" << "\n";
+    passed = false;
+  }
+  bufMgr->allocPage(file1ptr,i,page);  
+  // Check that disposePage removes the correct page from the buffer pool
+  bufMgr->disposePage(file1ptr,1);
+  valid = bufMgr->getFrameValid(0);
+  if(valid != 0){
+    std::cout << "ERROR Frame not disposed correctly in disposePage" << "\n";
+    passed = false;
+  }
+  // and from the file
+  try{
+    file1ptr->readPage(1);
+    passed = false;
+  }
+  catch(InvalidPageException e){
+  
+  }
+  // Make sure that allocPage allocates the next frame
+  bufMgr->allocPage(file2ptr,i,page);
+  valid = bufMgr->getFrameValid(2);
+  if(valid!=1){
+    std::cout << "ERROR Frame not allocated correctly in allocPage" << "\n";
+    passed = false;
+  }
+  
+  if(passed){
+    std:: cout << "allocPage/disposePage test SUCCEEDED" << "\n";
+  }
+  else{
+    std::cout << "allocPage/disposePage test FAILED" << "\n";
+  }
+  
+//TEST for readPage
+  passed = true; 
+  // Check that it correctly finds the page in the buffer pool
+  try{
+    bufMgr->readPage(file1ptr,2,page);
+  }
+  catch(InvalidPageException e){
+    std::cout << "ERROR page not read correctly in readPage" << "\n";
+    passed = false;
+  }
+  // Check that it returns the correct page
+  if(page->page_number() != 2){
+    std::cout << "ERROR page not read correctly in readPage" << "\n";
+    passed = false;
+  }
+  // Check that it incremented the pincount
+  if(bufMgr->getPinCnt(1) !=2){
+    std::cout << "ERROR incorrect pincount in readPage" << "\n";
+    passed = false;
+  }
+  // Check that it allocates a new frame if the requested page is not in the pool
+  file1ptr->allocatePage();
+  file1ptr->allocatePage();
+  bufMgr->readPage(file1ptr,3,page);
+  bufMgr->printSelf();
+  // Is the frame allocated?
+  if(!bufMgr->getFrameValid(3)){
+    std::cout << "ERROR page not allocated in readPage" << "\n";
+    passed = false;
+  }
+  if(passed){
+    std:: cout << "readPage test SUCCEEDED" << "\n";
+  }
+  else{
+    std::cout << "readPage test FAILED" << "\n";
+  }
 }
