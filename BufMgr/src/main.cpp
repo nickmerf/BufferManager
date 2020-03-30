@@ -414,7 +414,6 @@ void newTest(){
   file1ptr->allocatePage();
   file1ptr->allocatePage();
   bufMgr->readPage(file1ptr,3,page);
-  bufMgr->printSelf();
   // Is the frame allocated?
   if(!bufMgr->getFrameValid(3)){
     std::cout << "ERROR page not allocated in readPage" << "\n";
