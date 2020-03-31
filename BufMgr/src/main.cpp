@@ -464,8 +464,59 @@ void newTest(){
   }
   else{
     std::cout << "flushFile test             FAILED" << "\n";
+  }  
+  
+//TEST for allocBuf
+  passed = true;
+  // Clear up the buffer
+  bufMgr->unPinPage(file2ptr,1,0); 
+  bufMgr->flushFile(file2ptr); 
+  
+  // This test tests the worst case scenario in which the buffer clock hand is 1 frame
+    // past the only frame that is free. At this point all frames have refbit = 1.
+    // Therefore the clock should make one rotation, clearing all the refbits, and then
+    // make one more rotation to see if there are any free frames. It will go all the way to
+    // the frame before the initial on its second rotation and insert the new page there.
+  
+  // Fill up the buffer
+  for (i = 0; i < 100; i++)
+	{   
+		bufMgr->allocPage(file1ptr, pid[i], page);
+		sprintf((char*)tmpbuf, "test.1 Page %d %7.1f", pid[i], (float)pid[i]);   
+		rid[i] = page->insertRecord(tmpbuf);		
+	}
+  // Free one frame
+  bufMgr->unPinPage(file1ptr, 102, false);
+  // Try to allocate a new page (which uses allocBuf)
+  try{
+    bufMgr->allocPage(file1ptr, pid[i], page);
+  }
+  // If the buffer was not able to allocate the page, it is not working correctly
+  catch(const std::exception& e){
+    passed = false;
+  }
+  // Check that the new frame has replaced the old
+  try{
+    bufMgr->readPage(file1ptr,104,page);
+    bufMgr->unPinPage(file1ptr,104,false);
+  }
+  // If the new frame is not found in the pool, it was not properly allocated
+  catch(const std::exception& e){
+    passed = false;
+  }  
+
+  if(passed){
+    std:: cout << "allocBuf test              SUCCEEDED" << "\n";
+  }
+  else{
+    std::cout << "allocBuf test              FAILED" << "\n";
   }   
+  
   // Clear up the test bufMgr so the provided tests will work correctly
-  bufMgr->unPinPage(file2ptr,1,0);
-  bufMgr->flushFile(file2ptr);
+  for(int i =4; i <= 104; i++){
+    if(i!=102){
+      bufMgr->unPinPage(file1ptr, i, false);
+    }
+  }
+  bufMgr->flushFile(file1ptr);
 }
