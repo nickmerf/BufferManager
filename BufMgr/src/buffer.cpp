@@ -93,8 +93,14 @@ void BufMgr::allocBuf(FrameId & frame)
     return;
   }
 	advanceClock();
+  // Number of rotations the clock has made to limit the search
+  int rotations = 0;
  // If the first frame is not free, check the rest of the buffer pool
-	while(initial != clockHand) {
+	while(rotations < 2) {   
+    // If we have reached the initial frame, we have made one rotation
+    if(initial == clockHand){
+      rotations++;
+    }
     // If the frame is not valid, it is free
 	  if(!bufDescTable[clockHand].valid) {
       // return the frame's ID
@@ -131,12 +137,14 @@ void BufMgr::allocBuf(FrameId & frame)
       // the frame has been chosen to be replaced, return it's ID
       frame = bufDescTable[clockHand].frameNo;
       break;
-    }
+    }   
   }
-  // If the clock has done a full rotation the buffer is full
-  if(initial == clockHand) {
+  // If the clock has done two full rotations without finding a free frame the buffer is full
+  if(rotations>2) {
+    std:: cout << " ERROR clockhand: " << clockHand << "\n";
     throw BufferExceededException();
   }
+
 }
 
 /**
@@ -294,7 +302,7 @@ void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
   * @param PageNo  Page number
 */
 void BufMgr::disposePage(File* file, const PageId PageNo)
-{  
+{ 
   FrameId frame;     
   try{ 
     hashTable->lookup(file, PageNo, frame);
@@ -313,6 +321,7 @@ void BufMgr::disposePage(File* file, const PageId PageNo)
   // deletes a particular page from file
   file->deletePage(PageNo); 
 }
+
 
 
 /**
@@ -334,6 +343,7 @@ void BufMgr::printSelf(void)
   }
 
 	std::cout << "Total Number of Valid Frames:" << validFrames << "\n";
+  std:: cout << "Clock hand: " << clockHand <<"\n";
 }
 
 }
