@@ -171,14 +171,14 @@ void testBufMgr()
 	//Test buffer manager
 	//Comment tests which you do not wish to run now. Tests are dependent on their preceding tests. So, they have to be run in the following order. 
 	//Commenting  a particular test requires commenting all tests that follow it else those tests would fail.
-	
-	/*fork_test(test1);
+	newTest();
+	fork_test(test1);
 	fork_test(test2);
 	fork_test(test3);
 	fork_test(test4);
 	fork_test(test5);
-	fork_test(test6);*/
-  newTest();
+	fork_test(test6);
+  
 
 	//Close files before deleting them
 	file1.close();
@@ -196,7 +196,6 @@ void testBufMgr()
 
 	delete bufMgr;
 
-	std::cout << "\n" << "Passed all tests." << "\n";
 }
 
 void test1()
@@ -420,9 +419,53 @@ void newTest(){
     passed = false;
   }
   if(passed){
-    std:: cout << "readPage test SUCCEEDED" << "\n";
+    std:: cout << "readPage test              SUCCEEDED" << "\n";
   }
   else{
-    std::cout << "readPage test FAILED" << "\n";
+    std::cout << "readPage test              FAILED" << "\n";
   }
+
+//TEST for unPinPage
+  passed = true;
+  try{
+    bufMgr->unPinPage(file1ptr,2,0);
+    bufMgr->unPinPage(file1ptr,2,1);
+    if(bufMgr->getPinCnt(1)!=0){
+      std::cout << "ERROR incorrect pincount in unPinPage" << "\n";
+      passed = false;
+    }
+    if(bufMgr->getDirtyBit(1)!=1){
+      std::cout << "ERROR incorrect dirty bit in unPinPage" << "\n";
+      passed = false;    
+    }
+  }
+  catch(PagePinnedException e){
+    std::cout << "ERROR unexpected PagePinnedException in unPinPage" << "\n";
+    passed = false;
+  } 
+  
+  if(passed){
+    std:: cout << "unPinPage test             SUCCEEDED" << "\n";
+  }
+  else{
+    std::cout << "unPinPage test             FAILED" << "\n";
+  } 
+
+//TEST for flushFile  
+  bufMgr->unPinPage(file1ptr,3,0);
+  bufMgr->flushFile(file1ptr);
+  // Check that the pages in the file have been removed from the buffer pool
+  if(bufMgr->getFrameValid(1) || bufMgr->getFrameValid(3)){
+    std::cout << "ERROR frame should have been cleared in flushFile" << "\n";
+    passed = false;
+  }
+  if(passed){
+    std:: cout << "flushFile test             SUCCEEDED" << "\n";
+  }
+  else{
+    std::cout << "flushFile test             FAILED" << "\n";
+  }   
+  // Clear up the test bufMgr so the provided tests will work correctly
+  bufMgr->unPinPage(file2ptr,1,0);
+  bufMgr->flushFile(file2ptr);
 }
