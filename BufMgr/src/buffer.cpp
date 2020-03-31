@@ -65,6 +65,7 @@ void BufMgr::advanceClock()
   */
 void BufMgr::allocBuf(FrameId & frame) 
 {
+  advanceClock();
   // Check the first frame
 	FrameId initial = clockHand;
   // If the frame is not valid, it is free
@@ -222,32 +223,36 @@ void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty)
   * @throws BadBufferException If any frame allocated to the file is found to be invalid
   */
 void BufMgr::flushFile(const File* file) 
-{
-  // scan bufTable for pages belonging to the ﬁle
-  for(unsigned int frameNo = 0; frameNo < numBufs; frameNo++){
-    BufDesc & frame= bufDescTable[frameNo];
-    // If the page belongs to the file
-    if(frame.file->filename() == file->filename()){
-      // if an invalid page belonging to the ﬁle is encountered throw the exception
-      if(frame.pageNo == 0){
-        throw BadBufferException(frameNo, frame.dirty, frame.valid, frame.refbit);
+{ 
+  BufDesc* tmpbuf;
+   // scan bufTable for pages belonging to the file
+  for (std::uint32_t i = 0; i < numBufs; i++)
+	{
+  	tmpbuf = &(bufDescTable[i]);
+    if(tmpbuf->file == nullptr){
+      continue;
+    }
+		if(tmpbuf->file->filename() == file->filename()){
+      // if an invalid page belonging to the file is encountered throw the exception
+      if(tmpbuf->pageNo == 0){
+        throw BadBufferException(i, tmpbuf->dirty, tmpbuf->valid, tmpbuf->refbit);
       }
-      PageId pageNo = frame.pageNo;
-      if(frame.pinCnt > 0){
-        throw PagePinnedException(file->filename(), pageNo, frameNo);
-      }
+      PageId pageNo = tmpbuf->pageNo;
+      if(tmpbuf->pinCnt > 0){
+        throw PagePinnedException(file->filename(), pageNo, i);
+      } 
       // if the page is dirty
-      if(frame.dirty == true){
+      if(tmpbuf->dirty == true){
         // get the frame's page
-        Page & newPage = bufPool[frameNo];
+        Page & newPage = bufPool[i];
         // write the page to the appropriate page on disk
-        bufDescTable[frameNo].file->writePage(newPage);
+        bufDescTable[i].file->writePage(newPage);
         bufStats.diskwrites++;
       }
       // remove the page from the hashtable
       hashTable->remove(file, pageNo);
       // invoke the Clear() method of BufDesc for the page frame
-      bufDescTable[frameNo].Clear();
+      bufDescTable[i].Clear();
     }
   }
   bufStats.accesses++;
@@ -308,6 +313,7 @@ void BufMgr::disposePage(File* file, const PageId PageNo)
   // deletes a particular page from file
   file->deletePage(PageNo); 
 }
+
 
 /**
   * Print member variable values. 
